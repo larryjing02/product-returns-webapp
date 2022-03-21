@@ -101,14 +101,14 @@ async function verify_login(password, data) {
 // http://localhost:3000/home
 app.get('/home', function(request, response) {
 	// If the user is loggedin
-	if (request.session.loggedin || true) {
+	if (request.session.loggedin) {
 
     // TODO: DELETE ME
-    request.session.loggedin = true;
-    request.session.username = "admin";
-    request.session.origin = "ADMIN";
-    request.session.name = "Administrator";
-    request.session.permissions = 1;
+    // request.session.loggedin = true;
+    // request.session.username = "admin";
+    // request.session.origin = "ADMIN";
+    // request.session.name = "Administrator";
+    // request.session.permissions = 1;
 
 
     response.render('home', {
@@ -123,8 +123,8 @@ app.get('/home', function(request, response) {
 });
 
 
-// GET endpoint for submit
-app.get("/:mac/:dev", async (req, res) => {
+// GET endpoint for submit query
+app.get("/query/:mac/:dev", async (req, res) => {
   const mac = req.params.mac;
   const dev = req.params.dev;
   res.type("text");
@@ -178,14 +178,23 @@ app.get("/search/:mac", async (req, res) => {
   const mac = req.params.mac;
   res.type("text");
   try {
-    if (await mac_found(pool, mac)) {
-      query = "Searched MAC " + mac + " was found on the database!";
+    const sqlrequest = pool.request();
+
+    const query = `SELECT *
+       FROM [dbo].[MAC_Address]
+       WHERE mac_addr = '${mac}'`;
+  
+    let data = await sqlrequest.query(query);
+    if (data.rowsAffected[0] === 0) {
+      console.log("MAC Address not found in database.")
+      res.status(200);
+      res.send("{}");
+      res.end();
     } else {
-      query = "Searched MAC " + mac + " not found! Adding now.";
+      res.status(200);
+      res.send(JSON.stringify(data.recordset[0]));
+      res.end();
     }
-    res.status(200);
-    res.send(query);
-    res.end();
   } catch (error) {
     console.log(error);
     res.status(500);

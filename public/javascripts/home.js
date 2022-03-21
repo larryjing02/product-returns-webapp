@@ -3,8 +3,6 @@ const reg = /^[0-9a-zA-Z]+$/;
 (function () {
   window.addEventListener("load", init);
 
-  console.log("HELLO");
-
   /**
    * Loading UI and listeners once page finishes loading
    */
@@ -31,9 +29,7 @@ const reg = /^[0-9a-zA-Z]+$/;
       queryDatabase(mac, dev);
     });
 
-    search.addEventListener("click", function () {
-        console.log("Search");
-  
+    search.addEventListener("click", function () { 
         let mac = document.getElementById("mac_addr_search").value;
   
         // Checks length of inputted mac address (must be 12)
@@ -51,7 +47,7 @@ const reg = /^[0-9a-zA-Z]+$/;
 
 function queryDatabase(mac, dev) {
   console.log("Querying: ");
-  fetch("http://localhost:3000/" + mac + "/" + dev, {
+  fetch("http://localhost:3000/query/" + mac + "/" + dev, {
     mode: "cors",
     method: "GET",
     credentials: "same-origin",
@@ -72,9 +68,32 @@ function searchDatabase(mac) {
       credentials: "same-origin",
     })
       .then(statusCheck)
-      .then((res) => res.json())
+      .then((res) => res.text())
       .then((res) => {
-        console.log(res);
+        const data = JSON.parse(res);
+        let list = document.getElementById("infoList");
+        list.innerHTML = "";
+        if (Object.keys(data).length === 0) {
+            alert("MAC Address '" + mac + "' was not found.");
+            return;
+        }
+
+        // TODO: Fix formatting
+        let li = document.createElement("li");
+        li.innerText = 'MAC Address: ' + data["mac_addr"];
+        list.appendChild(li);
+        let li2 = document.createElement("li");
+        li2.innerText = 'Device Type: ' + data["product_type"];
+        list.appendChild(li2);
+        let li3 = document.createElement("li");
+        li3.innerText = 'Ticket Number: ' + data["ticket_number"];
+        list.appendChild(li3);
+        let li4 = document.createElement("li");
+        li4.innerText = 'Origin Center: ' + data["origin"];
+        list.appendChild(li4);
+        let li5 = document.createElement("li");
+        li5.innerText = 'Process Time: ' + data["processtime"];
+        list.appendChild(li5);
       })
       .catch((e) => console.log(e));
   }
