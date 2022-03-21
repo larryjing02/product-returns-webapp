@@ -123,7 +123,7 @@ app.get('/home', function(request, response) {
 });
 
 
-// GET endpoint
+// GET endpoint for submit
 app.get("/:mac/:dev", async (req, res) => {
   const mac = req.params.mac;
   const dev = req.params.dev;
@@ -173,6 +173,26 @@ async function add_mac(pool, mac, dev, orig) {
   console.log("Add to database: " + mac + " : " + dev);
 }
 
+// GET endpoint for search
+app.get("/search/:mac", async (req, res) => {
+  const mac = req.params.mac;
+  res.type("text");
+  try {
+    if (await mac_found(pool, mac)) {
+      query = "Searched MAC " + mac + " was found on the database!";
+    } else {
+      query = "Searched MAC " + mac + " not found! Adding now.";
+    }
+    res.status(200);
+    res.send(query);
+    res.end();
+  } catch (error) {
+    console.log(error);
+    res.status(500);
+    res.send("SENDING ERROR");
+    res.end();
+  }
+});
 
 // Close connection to database
 process.on("SIGINT", () => {
