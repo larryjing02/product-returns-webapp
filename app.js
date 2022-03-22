@@ -82,6 +82,7 @@ app.post('/auth', async function(request, response) {
 async function verify_login(password, data) {
   // Check if data has anything in it first
   if (data.rowsAffected[0] === 0) {
+    console.log("User doesn't exist!");
     return false;
   }
   try {
@@ -90,8 +91,6 @@ async function verify_login(password, data) {
     const salt = pass.substring(0,29);
     // Compute new hash and compare
     const hash = await bcrypt.hash(password, salt);
-    // console.log(pass);
-    // console.log(hash);
     return (pass === hash);
   } catch (error) {
     console.log(error);
@@ -102,15 +101,6 @@ async function verify_login(password, data) {
 app.get('/home', function(request, response) {
 	// If the user is loggedin
 	if (request.session.loggedin) {
-
-    // TODO: DELETE ME
-    // request.session.loggedin = true;
-    // request.session.username = "admin";
-    // request.session.origin = "ADMIN";
-    // request.session.name = "Administrator";
-    // request.session.permissions = 1;
-
-
     response.render('home', {
       name: request.session.name,
       origin: request.session.origin
@@ -131,8 +121,13 @@ app.get("/query/:mac/:dev", async (req, res) => {
   try {
     if (await mac_found(pool, mac)) {
       query = "MAC " + mac + " was found on the database!";
+    } else if (req.session.permissions > 2) {
+      res.status(200);
+      res.send("Sorry, you do not have permission to write to the database.");
+      res.end();
+      return;
     } else {
-      query = "MAC " + mac + " not found! Adding now.";
+      query = "Adding MAC " + mac + " to the database.";
       await add_mac(pool, mac, dev, req.session.origin);
     }
     res.status(200);
