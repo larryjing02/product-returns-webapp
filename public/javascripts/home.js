@@ -115,8 +115,11 @@ function searchDatabase(query) {
       li4.innerText = 'Origin Center: ' + data["origin"];
       list.appendChild(li4);
       let li5 = document.createElement("li");
-      li5.innerText = 'Process Time: ' + data["processtime"];
+      li5.innerText = 'Agent Username: ' + data["agent_username"];
       list.appendChild(li5);
+      let li6 = document.createElement("li");
+      li6.innerText = 'Process Time: ' + data["processtime"];
+      list.appendChild(li6);
   }).catch((e) => console.log(e));
 }
   

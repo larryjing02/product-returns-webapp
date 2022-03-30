@@ -128,7 +128,7 @@ app.get("/query/:mac/:dev", async (req, res) => {
       return;
     } else {
       query = "Adding MAC " + mac + " to the database.";
-      await add_mac(pool, mac, dev, req.session.origin);
+      await add_mac(pool, mac, dev, req.session.origin, req.session.username);
     }
     res.status(200);
     res.send(query);
@@ -156,13 +156,13 @@ async function mac_found(pool, mac) {
 }
 
 // TODO: Refactor to post
-async function add_mac(pool, mac, dev, orig) {
+async function add_mac(pool, mac, dev, orig, user) {
   const sqlrequest = pool.request();
 
   const query = `INSERT INTO [dbo].[MAC_Address]
   VALUES ('${mac}', '${dev}', 
   (SELECT MAX(ticket_number) + 1 FROM [dbo].[MAC_Address]), 
-  '${orig}', GETUTCDATE());`;
+  '${orig}', GETUTCDATE(), '${user}');`;
 
   await sqlrequest.query(query);
   console.log("Add to database: " + mac + " : " + dev);
