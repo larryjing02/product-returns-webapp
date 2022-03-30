@@ -1,4 +1,5 @@
-const reg = /^[0-9a-zA-Z]+$/;
+const reg_ticketnum = /^\d{7}$/;
+const reg_mac = /^[0-9a-zA-Z]{12}$/;
 
 (function () {
   window.addEventListener("load", init);
@@ -8,7 +9,8 @@ const reg = /^[0-9a-zA-Z]+$/;
    */
   function init() {
     const submit = document.querySelector(".btn");
-    const search = document.querySelector(".search_btn");
+    const search1 = document.querySelector(".search_btn_1");
+    const search2 = document.querySelector(".search_btn_2");
     submit.addEventListener("click", function () {
       console.log("Form Submitted");
 
@@ -20,7 +22,7 @@ const reg = /^[0-9a-zA-Z]+$/;
 
       // Checks length of inputted mac address (must be 12)
       // Checks that inputted mac address is alphanumeric
-      if (mac.length != 12 || !mac.match(reg)) {
+      if (!mac.match(reg_mac)) {
         alert("Please input a valid MAC Address. Format: AABBCCDDEEFF");
         return;
       }
@@ -29,19 +31,32 @@ const reg = /^[0-9a-zA-Z]+$/;
       queryDatabase(mac, dev);
     });
 
-    search.addEventListener("click", function () { 
-        let mac = document.getElementById("mac_addr_search").value;
-  
-        // Checks length of inputted mac address (must be 12)
-        // Checks that inputted mac address is alphanumeric
-        if (mac.length != 12 || !mac.match(reg)) {
-          alert("Please input a valid MAC Address. Format: AABBCCDDEEFF");
-          return;
-        }
-        mac = mac.toUpperCase();
-  
-        searchDatabase(mac);
-      });
+    search1.addEventListener("click", function () { 
+      let num = document.getElementById("tic_num_search").value;
+
+      // Checks length of inputted ticket number (must be 7)
+      // Checks that inputted ticket number is numeric
+      if (!num.match(reg_ticketnum)) {
+        alert("Please input a valid Ticket Number. Format: 1234567");
+        return;
+      }
+
+      searchDatabase(num);
+    });
+
+    search2.addEventListener("click", function () { 
+      let mac = document.getElementById("mac_addr_search").value;
+
+      // Checks length of inputted mac address (must be 12)
+      // Checks that inputted mac address is alphanumeric
+      if (!mac.match(reg_mac)) {
+        alert("Please input a valid MAC Address. Format: AABBCCDDEEFF");
+        return;
+      }
+      mac = mac.toUpperCase();
+
+      searchDatabase(mac);
+    });
   }
 })();
 
@@ -51,8 +66,7 @@ function queryDatabase(mac, dev) {
     mode: "cors",
     method: "GET",
     credentials: "same-origin",
-  })
-    .then(statusCheck)
+  }).then(statusCheck)
     .then((res) => res.text())
     .then((res) => {
       console.log(res), alert(res);
@@ -60,43 +74,51 @@ function queryDatabase(mac, dev) {
     .catch((e) => console.log(e));
 }
 
-function searchDatabase(mac) {
-    console.log("Search: ");
-    fetch("http://localhost:3000/search/" + mac, {
-      mode: "cors",
-      method: "GET",
-      credentials: "same-origin",
-    })
-      .then(statusCheck)
-      .then((res) => res.text())
-      .then((res) => {
-        const data = JSON.parse(res);
-        let list = document.getElementById("infoList");
-        list.innerHTML = "";
-        if (Object.keys(data).length === 0) {
-            alert("MAC Address '" + mac + "' was not found.");
-            return;
-        }
-
-        // TODO: Fix formatting
-        let li = document.createElement("li");
-        li.innerText = 'MAC Address: ' + data["mac_addr"];
-        list.appendChild(li);
-        let li2 = document.createElement("li");
-        li2.innerText = 'Device Type: ' + data["product_type"];
-        list.appendChild(li2);
-        let li3 = document.createElement("li");
-        li3.innerText = 'Ticket Number: ' + data["ticket_number"];
-        list.appendChild(li3);
-        let li4 = document.createElement("li");
-        li4.innerText = 'Origin Center: ' + data["origin"];
-        list.appendChild(li4);
-        let li5 = document.createElement("li");
-        li5.innerText = 'Process Time: ' + data["processtime"];
-        list.appendChild(li5);
-      })
-      .catch((e) => console.log(e));
+function searchDatabase(query) {
+  console.log("Search: ");
+  let url = "http://localhost:3000/search/"
+  if (query.length == 7) {
+    url += "ticket/" + query;
+  } else {
+    url += "mac/" + query;
   }
+  fetch(url, {
+    mode: "cors",
+    method: "GET",
+    credentials: "same-origin",
+  }).then(statusCheck)
+    .then((res) => res.text())
+    .then((res) => {
+      const data = JSON.parse(res);
+      let list = document.getElementById("infoList");
+      list.innerHTML = "";
+      if (Object.keys(data).length === 0) {
+          if (query.length == 7) {
+            alert("Ticket Number '" + query + "' was not found.");
+          } else {
+            alert("MAC Address '" + query + "' was not found.");
+          }
+          return;
+      }
+
+      // TODO: Fix formatting
+      let li = document.createElement("li");
+      li.innerText = 'MAC Address: ' + data["mac_addr"];
+      list.appendChild(li);
+      let li2 = document.createElement("li");
+      li2.innerText = 'Device Type: ' + data["product_type"];
+      list.appendChild(li2);
+      let li3 = document.createElement("li");
+      li3.innerText = 'Ticket Number: ' + data["ticket_number"];
+      list.appendChild(li3);
+      let li4 = document.createElement("li");
+      li4.innerText = 'Origin Center: ' + data["origin"];
+      list.appendChild(li4);
+      let li5 = document.createElement("li");
+      li5.innerText = 'Process Time: ' + data["processtime"];
+      list.appendChild(li5);
+  }).catch((e) => console.log(e));
+}
   
 
 async function statusCheck(res) {

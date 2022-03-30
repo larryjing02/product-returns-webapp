@@ -168,8 +168,39 @@ async function add_mac(pool, mac, dev, orig) {
   console.log("Add to database: " + mac + " : " + dev);
 }
 
-// GET endpoint for search
-app.get("/search/:mac", async (req, res) => {
+
+// GET endpoint for search - Ticket Number
+app.get("/search/ticket/:num", async (req, res) => {
+  const num = req.params.num;
+  res.type("text");
+  try {
+    const sqlrequest = pool.request();
+
+    const query = `SELECT *
+       FROM [dbo].[MAC_Address]
+       WHERE ticket_number = '${num}'`;
+  
+    let data = await sqlrequest.query(query);
+    if (data.rowsAffected[0] === 0) {
+      console.log("Ticket Number not found in database.")
+      res.status(200);
+      res.send("{}");
+      res.end();
+    } else {
+      res.status(200);
+      res.send(JSON.stringify(data.recordset[0]));
+      res.end();
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500);
+    res.send("SENDING ERROR");
+    res.end();
+  }
+});
+
+// GET endpoint for search - MAC Address
+app.get("/search/mac/:mac", async (req, res) => {
   const mac = req.params.mac;
   res.type("text");
   try {
