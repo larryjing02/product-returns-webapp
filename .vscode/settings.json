@@ -1,0 +1,4 @@
+{
+    "appService.defaultWebAppToDeploy": "/subscriptions/e5467c89-a192-478a-b656-887c01f7f9cf/resourceGroups/Wyze_TestDB/providers/Microsoft.Web/sites/product-returns-app",
+    "appService.deploySubpath": "."
+}
