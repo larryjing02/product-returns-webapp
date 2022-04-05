@@ -293,7 +293,7 @@ process.on("SIGINT", () => {
   process.exit();
 });
 
-app.listen(3000, async () => {
+app.listen(process.env.PORT || 3000, async () => {
   pool = await sql.connect(config);
   console.log("SQL Database connected!");
 });
