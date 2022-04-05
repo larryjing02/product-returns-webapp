@@ -39,8 +39,6 @@ var pool;
 
 // http://localhost:3000/
 app.get('/', function(request, response) {
-	// Render login template
-	// response.sendFile(path.join(__dirname + '/views/login.html'));
 	response.render('login', {
     title: 'Wyze Returns Demo'
   });
@@ -112,6 +110,66 @@ app.get('/home', function(request, response) {
 	response.end();
 });
 
+// http://localhost:3000/createauth
+app.post('/createauth', async function(request, response) {
+  if (request.session.permissions !== 1) {
+    response.status(403);
+    response.send("Must have administrator privileges!");
+    response.end();
+    return
+  }
+
+	// Capture the input fields
+	let username = request.body.username;
+	let password = request.body.password;
+	let name = request.body.name;
+	let origin = request.body.origin;
+	let permission = request.body.permission;
+
+  // Ensure the input fields exists and are not empty
+  if (username && password && name && origin && permission) {
+    console.log("Attempting to create user: " + username);
+
+    // Hashes plaintext password and returns salted hash
+    bcrypt.hash(password, 10, async function(err, hash) {
+      // Store hash in database here
+      const sqlrequest = pool.request();
+
+      const query = `INSERT INTO [dbo].[Users]
+      VALUES ('${username}',
+      '${hash}',
+      '${origin}',
+      '${name}',
+      ${permission})`;
+
+      let data = await sqlrequest.query(query);
+      console.log(data.rowsAffected);
+      console.log(data.rowsAffected[0]);
+      if (data.rowsAffected[0] === 0) {
+        response.redirect('/home');
+      } else {
+        response.redirect('/home');
+      }
+    });
+  } else {
+    response.send('Please enter all fields!');
+  }
+  response.end();
+});
+
+// http://localhost:3000/create
+app.get('/create', function(request, response) {
+	// If the user is loggedin
+	if (request.session.loggedin && request.session.permissions == 1) {
+    response.render('create', {
+      title: "Create New User",
+    });
+	} else {
+		// Not logged in
+		response.send('You must be logged in as an administrator to view this page!');
+	}
+	response.end();
+});
 
 // GET endpoint for submit query
 app.get("/query/:mac/:dev", async (req, res) => {
@@ -155,7 +213,7 @@ async function mac_found(pool, mac) {
   return data.recordset[0][""] == 1;
 }
 
-// TODO: Refactor to post
+// TODO: Refactor to post?
 async function add_mac(pool, mac, dev, orig, user) {
   const sqlrequest = pool.request();
 
@@ -167,7 +225,6 @@ async function add_mac(pool, mac, dev, orig, user) {
   await sqlrequest.query(query);
   console.log("Add to database: " + mac + " : " + dev);
 }
-
 
 // GET endpoint for search - Ticket Number
 app.get("/search/ticket/:num", async (req, res) => {
