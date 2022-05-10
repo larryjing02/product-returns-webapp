@@ -9,7 +9,6 @@
     <div class="topnav">
         <a href; style="float:left">Welcome, <%= name %>!</a>
         <div id="navdetails">
-            <a href="create" style="font-size: 17px;">Create New User</a>
             <a href style="font-size: 17px;">Center: <%= origin %></a>
             <a href style="font-size: 17px;" id='time';></a>
         </div>
@@ -23,10 +22,12 @@
             setInterval(refreshTime, 1000);
         </script>
     </div>
+    <a href="/create" style="font-size: 17px;">Create New User</a>
     <section id="querysection">
         <div class="frm1">
             <h1>Input New Ticket</h1><br>
             Input MAC Address: <input type="text" id="mac_addr" text="2CAA8E0B6C95"><br>
+            Input Ticket Number: <input type="text" id="ticket_num" text="12345"><br>
             <label for="device">Select Device Type:</label>
             <select name="device" id="device">
                 <option value="Wyze Cam v2">Wyze Cam v2</option>

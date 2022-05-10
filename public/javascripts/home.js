@@ -11,14 +11,17 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
     const submit = document.querySelector(".btn");
     const search1 = document.querySelector(".search_btn_1");
     const search2 = document.querySelector(".search_btn_2");
+
     submit.addEventListener("click", function () {
       console.log("Form Submitted");
 
       let mac = document.getElementById("mac_addr").value;
       let dev = document.getElementById("device").value;
+      let num = document.getElementById("ticket_num").value;
 
       console.log("MAC Address: " + mac);
       console.log("Device Type: " + dev);
+      console.log("Ticket Num: " + num);
 
       // Checks length of inputted mac address (must be 12)
       // Checks that inputted mac address is alphanumeric
@@ -28,7 +31,7 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
       }
       mac = mac.toUpperCase();
 
-      queryDatabase(mac, dev);
+      queryDatabase(mac, dev, num);
     });
 
     search1.addEventListener("click", function () { 
@@ -60,9 +63,9 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
   }
 })();
 
-function queryDatabase(mac, dev) {
+function queryDatabase(mac, dev, num) {
   console.log("Querying: ");
-  fetch("http://localhost:3000/query/" + mac + "/" + dev, {
+  fetch("http://localhost:3000/query/" + mac + "/" + dev + "/" + num, {
     mode: "cors",
     method: "GET",
     credentials: "same-origin",

@@ -2,7 +2,7 @@ const express = require('express');
 const session = require('express-session');
 const path = require('path');
 const PropertiesReader = require("properties-reader");
-const sql = require("mssql");
+const mysql = require("mysql");
 const bcrypt = require("bcrypt");
 
 //////////////////////////////////////////////////////////////////////
@@ -26,14 +26,23 @@ app.set('view engine', 'ejs')
 const properties = PropertiesReader("conn.properties");
 
 // Create connection to database
-const config = {
+// const config = {
+//   user: properties.get("username"),
+//   password: properties.get("password"),
+//   server: properties.get("server"),
+//   database: properties.get("database"),
+//   encrypt: true,
+// };
+// var pool;
+
+const pool = mysql.createPool({
+  connectionLimit: properties.get("connectionlimit"),
+  host: properties.get("server"),
   user: properties.get("username"),
   password: properties.get("password"),
-  server: properties.get("server"),
   database: properties.get("database"),
-  encrypt: true,
-};
-var pool;
+  debug: false
+});
 
 //////////////////////////////////////////////////////////////////////
 
@@ -49,42 +58,44 @@ app.post('/auth', async function(request, response) {
 	// Capture the input fields
 	let username = request.body.username;
 	let password = request.body.password;
+
 	// Ensure the input fields exists and are not empty
 	if (username && password) {
 		console.log("Attempting login: " + username);
 
-    const sqlrequest = pool.request();
+    const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;";
+    const query = mysql.format(selectQuery, ["Users", "username", username])
 
-    const query = `SELECT *
-      FROM [dbo].[Users]
-      WHERE username = '${username}'`;
-
-    let data = await sqlrequest.query(query);
-    if (await verify_login(password, data)) {
-      request.session.loggedin = true;
-			request.session.username = username;
-      request.session.origin = data.recordset[0]["origin"];
-      request.session.name = data.recordset[0]["name"];
-      request.session.permissions = data.recordset[0]["user_permissions"];
-			// Redirect to home page
-      response.redirect('/home');
-    } else {
-      response.send('Incorrect Username and/or Password!');
-    }	
+    pool.query(query, async (err, data) => {
+      if (err) {
+          console.error(err);
+          return;
+      }
+      if (await verify_login(password, data)) {
+        request.session.loggedin = true;
+        request.session.username = username;
+        request.session.origin = data[0]["origin"];
+        request.session.name = data[0]["name"];
+        request.session.permissions = data[0]["user_permissions"];
+        // Redirect to home page
+        return response.redirect('/home');
+      } else {
+        return response.send('Incorrect Username and/or Password!');
+      }
+    });
 	} else {
-		response.send('Please enter Username and Password!');
+		return response.send('Please enter Username and Password!');
 	}
-  response.end();
 });
 
 async function verify_login(password, data) {
   // Check if data has anything in it first
-  if (data.rowsAffected[0] === 0) {
+  if (data.length === 0) {
     console.log("User doesn't exist!");
     return false;
   }
   try {
-    const pass = data.recordset[0]["password"];
+    const pass = data[0]["password"];
     // Extract salt from stored password
     const salt = pass.substring(0,29);
     // Compute new hash and compare
@@ -92,6 +103,7 @@ async function verify_login(password, data) {
     return (pass === hash);
   } catch (error) {
     console.log(error);
+    return false;
   }
 }
 
@@ -131,30 +143,31 @@ app.post('/createauth', async function(request, response) {
     console.log("Attempting to create user: " + username);
 
     // Hashes plaintext password and returns salted hash
-    bcrypt.hash(password, 10, async function(err, hash) {
-      // Store hash in database here
-      const sqlrequest = pool.request();
-
-      const query = `INSERT INTO [dbo].[Users]
-      VALUES ('${username}',
-      '${hash}',
-      '${origin}',
-      '${name}',
-      ${permission})`;
-
-      let data = await sqlrequest.query(query);
-      console.log(data.rowsAffected);
-      console.log(data.rowsAffected[0]);
-      if (data.rowsAffected[0] === 0) {
-        response.redirect('/home');
-      } else {
-        response.redirect('/home');
+    bcrypt.hash(password, 10, async (err, hash) => {
+      if (err) {
+        console.error(err);
+        return;
       }
+      // Store hash in database
+      const selectQuery = "INSERT INTO ?? VALUES (?, ?, ?, ?, ?);";
+      const query = mysql.format(selectQuery, ["Users", username, hash, origin, name, permission]);
+  
+      pool.query(query, async (err, data) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        if (data.affectedRows === 1) {
+          // Redirect to home page
+          return response.redirect('/home');
+        } else {
+          return response.send('Failed to create new user!');
+        }
+      });
     });
   } else {
-    response.send('Please enter all fields!');
+    return response.send('Please enter all fields!');
   }
-  response.end();
 });
 
 // http://localhost:3000/create
@@ -172,58 +185,52 @@ app.get('/create', function(request, response) {
 });
 
 // GET endpoint for submit query
-app.get("/query/:mac/:dev", async (req, res) => {
+app.get("/query/:mac/:dev/:num", async (req, res) => {
   const mac = req.params.mac;
   const dev = req.params.dev;
+  const num = req.params.num;
   res.type("text");
   try {
-    if (await mac_found(pool, mac)) {
-      query = "MAC " + mac + " was found on the database!";
-    } else if (req.session.permissions > 2) {
+    const selectQuery = "SELECT COUNT(*) FROM ?? WHERE ?? = ?;";
+    let query = mysql.format(selectQuery, ["MAC_Address", "mac_addr", mac]);
+
+    pool.query(query, async (err, data) => {
+      if (err) {
+          console.error(err);
+          return;
+      }
+      if (data[0]["COUNT(*)"] >= 1) {
+        query = "MAC " + mac + " was found on the database!";
+      } else if (req.session.permissions > 2) {
+        res.status(200);
+        res.send("Sorry, you do not have permission to write to the database.");
+        return;
+      } else {
+        query = "Adding MAC " + mac + " to the database.";
+        await add_mac(pool, mac, dev, num, req.session.origin, req.session.username);
+      }
       res.status(200);
-      res.send("Sorry, you do not have permission to write to the database.");
-      res.end();
-      return;
-    } else {
-      query = "Adding MAC " + mac + " to the database.";
-      await add_mac(pool, mac, dev, req.session.origin, req.session.username);
-    }
-    res.status(200);
-    res.send(query);
-    res.end();
+      res.send(query);
+    });
   } catch (error) {
     console.log(error);
     res.status(500);
     res.send("SENDING ERROR");
-    res.end();
   }
 });
 
-// Returns whether or not MAC exists in database
-async function mac_found(pool, mac) {
-  const sqlrequest = pool.request();
-
-  const query = `SELECT COUNT(*)
-     FROM [dbo].[MAC_Address]
-     WHERE mac_addr = '${mac}'`;
-
-  let data = await sqlrequest.query(query);
-
-  // If count returns 0, MAC does not exist in database
-  return data.recordset[0][""] == 1;
-}
-
-// TODO: Refactor to post?
-async function add_mac(pool, mac, dev, orig, user) {
-  const sqlrequest = pool.request();
-
-  const query = `INSERT INTO [dbo].[MAC_Address]
-  VALUES ('${mac}', '${dev}', 
-  (SELECT MAX(ticket_number) + 1 FROM [dbo].[MAC_Address]), 
-  '${orig}', GETUTCDATE(), '${user}');`;
-
-  await sqlrequest.query(query);
-  console.log("Add to database: " + mac + " : " + dev);
+// TODO: Fix ticket number
+async function add_mac(pool, mac, dev, num, orig, user) {
+  const selectQuery = `INSERT INTO ?? VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), ?);`
+  const query = mysql.format(selectQuery, ["MAC_Address", mac, dev, num, orig, user]);
+  // ello
+  pool.query(query, async (err, data) => {
+    if (err) {
+      console.error(err);
+    } else {
+      console.log("Add to database: " + mac + " : " + dev);
+    }
+  });      
 }
 
 // GET endpoint for search - Ticket Number
@@ -231,23 +238,23 @@ app.get("/search/ticket/:num", async (req, res) => {
   const num = req.params.num;
   res.type("text");
   try {
-    const sqlrequest = pool.request();
-
-    const query = `SELECT *
-       FROM [dbo].[MAC_Address]
-       WHERE ticket_number = '${num}'`;
-  
-    let data = await sqlrequest.query(query);
-    if (data.rowsAffected[0] === 0) {
-      console.log("Ticket Number not found in database.")
-      res.status(200);
-      res.send("{}");
-      res.end();
-    } else {
-      res.status(200);
-      res.send(JSON.stringify(data.recordset[0]));
-      res.end();
-    }
+    const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
+    const query = mysql.format(selectQuery, ["MAC_Address", "ticket_number", num]);
+    // ello
+    pool.query(query, async (err, data) => {
+      if (err) {
+        console.error(err);
+      } else {
+        if (data.length === 0) {
+          console.log("Ticket Number not found in database.")
+          res.status(200);
+          return res.send("{}");
+        } else {
+          res.status(200);
+          return res.send(JSON.stringify(data[0]));
+        }
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500);
@@ -261,23 +268,23 @@ app.get("/search/mac/:mac", async (req, res) => {
   const mac = req.params.mac;
   res.type("text");
   try {
-    const sqlrequest = pool.request();
-
-    const query = `SELECT *
-       FROM [dbo].[MAC_Address]
-       WHERE mac_addr = '${mac}'`;
-  
-    let data = await sqlrequest.query(query);
-    if (data.rowsAffected[0] === 0) {
-      console.log("MAC Address not found in database.")
-      res.status(200);
-      res.send("{}");
-      res.end();
-    } else {
-      res.status(200);
-      res.send(JSON.stringify(data.recordset[0]));
-      res.end();
-    }
+    const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
+    const query = mysql.format(selectQuery, ["MAC_Address", "mac_addr", mac]);
+    // ello
+    pool.query(query, async (err, data) => {
+      if (err) {
+        console.error(err);
+      } else {
+        if (data.length === 0) {
+          console.log("MAC Address not found in database.")
+          res.status(200);
+          return res.send("{}");
+        } else {
+          res.status(200);
+          return res.send(JSON.stringify(data[0]));
+        }
+      }
+    });
   } catch (error) {
     console.log(error);
     res.status(500);
@@ -286,14 +293,4 @@ app.get("/search/mac/:mac", async (req, res) => {
   }
 });
 
-// Close connection to database
-process.on("SIGINT", () => {
-  pool.close();
-  console.log("SQL Database disconnected!");
-  process.exit();
-});
-
-app.listen(process.env.PORT || 3000, async () => {
-  pool = await sql.connect(config);
-  console.log("SQL Database connected!");
-});
+app.listen(process.env.PORT || 3000);
