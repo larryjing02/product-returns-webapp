@@ -1,5 +1,5 @@
-# Temporarily commented
-# /conn.properties
+# Connection Properties
+/conn.properties
 
 # Logs
 logs
