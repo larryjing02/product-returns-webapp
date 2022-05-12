@@ -1,61 +1,61 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <title>Wyze - Returns Portal</title>
-    <link rel="stylesheet" href="stylesheets/style.css">
-    <link rel="shortcut icon" href="#">
-</head>
-<body>
-    <div class="topnav">
-        <a href; style="float:left">Welcome, <%= name %>!</a>
-        <div id="navdetails">
-            <a href style="font-size: 17px;">Center: <%= origin %></a>
-            <a href style="font-size: 17px;" id='time';></a>
+    <head>
+        <title>Wyze - Returns Portal</title>
+        <link rel="stylesheet" href="stylesheets/style.css">
+        <link rel="shortcut icon" href="#">
+    </head>
+    <body>
+        <div class="topnav">
+            <a href; style="float:left">Welcome, <%= name %>!</a>
+            <div id="navdetails">
+                <a href style="font-size: 17px;">Center: <%= origin %></a>
+                <a href style="font-size: 17px;" id='time';></a>
+            </div>
+            <script>
+                function refreshTime() {
+                    const timeDisplay = document.getElementById("time");
+                    const dateString = new Date().toLocaleString();
+                    const formattedString = dateString.replace(", ", " - ");
+                    timeDisplay.textContent = formattedString;
+                }
+                setInterval(refreshTime, 1000);
+            </script>
         </div>
-        <script>
-            function refreshTime() {
-                const timeDisplay = document.getElementById("time");
-                const dateString = new Date().toLocaleString();
-                const formattedString = dateString.replace(", ", " - ");
-                timeDisplay.textContent = formattedString;
-            }
-            setInterval(refreshTime, 1000);
-        </script>
-    </div>
-    <a href="/create" style="font-size: 17px;">Create New User</a>
-    <section id="querysection">
-        <div class="frm1">
-            <h1>Input New Ticket</h1><br>
-            Input MAC Address: <input type="text" id="mac_addr" text="2CAA8E0B6C95"><br>
-            Input Ticket Number: <input type="text" id="ticket_num" text="12345"><br>
-            <label for="device">Select Device Type:</label>
-            <select name="device" id="device">
-                <option value="Wyze Cam v2">Wyze Cam v2</option>
-                <option value="Wyze Cam v3">Wyze Cam v3</option>
-                <option value="Wyze Cam Pan">Wyze Cam Pan</option>
-                <option value="Wyze Cam Outdoor">Wyze Cam Outdoor</option>
-                <option value="Wyze Watch 44">Wyze Watch 44</option>
-                <option value="Wyze Watch 47">Wyze Watch 47</option>
-                <option value="Wyze Outdoor Basestation">Wyze Outdoor Basestation</option>
-                <option value="Wyze Robot Vacuum">Wyze Robot Vacuum</option>
-            </select>
-            <br><br>
-            <button class="btn">Submit</button>
-        </div>
-        <div class="frm2">
-            <h1>Search for Ticket</h1><br>
-            Search by Ticket Number: <input type="text" id="tic_num_search" text="1543597">
-            <button class="search_btn_1">Search</button>
-            <br>
-            <br>
-            Search by MAC Address: <input type="text" id="mac_addr_search" text="2CAA8E0B6C95">
-            <button class="search_btn_2">Search</button>
-            <br>
-            <ul id="infoList"></ul>
-        </div>
-    </section>
-    
-    <script src="javascripts/home.js"></script>
-    <noscript>You need to enable JavaScript to view the full site.</noscript>
-</body>
+        <a href="/create" style="font-size: 17px;">Create New User</a>
+        <section id="querysection">
+            <div class="frm1">
+                <h1>Input New Ticket</h1><br>
+                Input MAC Address: <input type="text" id="mac_addr" text="2CAA8E0B6C95"><br>
+                Input Ticket Number: <input type="text" id="ticket_num" text="12345"><br>
+                <label for="device">Select Device Type:</label>
+                <select name="device" id="device">
+                    <option value="Wyze Cam v2">Wyze Cam v2</option>
+                    <option value="Wyze Cam v3">Wyze Cam v3</option>
+                    <option value="Wyze Cam Pan">Wyze Cam Pan</option>
+                    <option value="Wyze Cam Outdoor">Wyze Cam Outdoor</option>
+                    <option value="Wyze Watch 44">Wyze Watch 44</option>
+                    <option value="Wyze Watch 47">Wyze Watch 47</option>
+                    <option value="Wyze Outdoor Basestation">Wyze Outdoor Basestation</option>
+                    <option value="Wyze Robot Vacuum">Wyze Robot Vacuum</option>
+                </select>
+                <br><br>
+                <button class="btn">Submit</button>
+            </div>
+            <div class="frm2">
+                <h1>Search for Ticket</h1><br>
+                Search by Ticket Number: <input type="text" id="tic_num_search" text="1543597">
+                <button class="search_btn_1">Search</button>
+                <br>
+                <br>
+                Search by MAC Address: <input type="text" id="mac_addr_search" text="2CAA8E0B6C95">
+                <button class="search_btn_2">Search</button>
+                <br>
+                <ul id="infoList"></ul>
+            </div>
+        </section>
+        
+        <script src="javascripts/home.js"></script>
+        <noscript>You need to enable JavaScript to view the full site.</noscript>
+    </body>
 </html>
