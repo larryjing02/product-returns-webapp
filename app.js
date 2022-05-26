@@ -185,10 +185,12 @@ app.get('/create', function(request, response) {
 });
 
 // GET endpoint for submit query
+// TODO: Refactor to POST
 app.get("/query/:mac/:dev/:num", async (req, res) => {
   const mac = req.params.mac;
   const dev = req.params.dev;
   const num = req.params.num;
+  console.log("Attempting to query for: " + mac);
   res.type("text");
   try {
     const selectQuery = "SELECT COUNT(*) FROM ?? WHERE ?? = ?;";
@@ -236,6 +238,7 @@ async function add_mac(pool, mac, dev, num, orig, user) {
 // GET endpoint for search - Ticket Number
 app.get("/search/ticket/:num", async (req, res) => {
   const num = req.params.num;
+  console.log("Attempting to search for ticket: " + num);
   res.type("text");
   try {
     const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
@@ -266,6 +269,7 @@ app.get("/search/ticket/:num", async (req, res) => {
 // GET endpoint for search - MAC Address
 app.get("/search/mac/:mac", async (req, res) => {
   const mac = req.params.mac;
+  console.log("Attempting to search for mac: " + mac);
   res.type("text");
   try {
     const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
