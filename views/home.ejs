@@ -3,6 +3,8 @@
     <head>
         <title>Wyze - Returns Portal</title>
         <link rel="stylesheet" href="stylesheets/style.css">
+        <script src="javascripts/home.js"></script>
+        <noscript>You need to enable JavaScript to view the full site.</noscript>
         <link rel="shortcut icon" href="#">
     </head>
     <body>
@@ -12,15 +14,6 @@
                 <a href style="font-size: 17px;">Center: <%= origin %></a>
                 <a href style="font-size: 17px;" id='time';></a>
             </div>
-            <script>
-                function refreshTime() {
-                    const timeDisplay = document.getElementById("time");
-                    const dateString = new Date().toLocaleString();
-                    const formattedString = dateString.replace(", ", " - ");
-                    timeDisplay.textContent = formattedString;
-                }
-                setInterval(refreshTime, 1000);
-            </script>
         </div>
         <a href="/create" style="font-size: 17px;">Create New User</a>
         <section id="querysection">
@@ -54,8 +47,5 @@
                 <ul id="infoList"></ul>
             </div>
         </section>
-        
-        <script src="javascripts/home.js"></script>
-        <noscript>You need to enable JavaScript to view the full site.</noscript>
     </body>
 </html>
