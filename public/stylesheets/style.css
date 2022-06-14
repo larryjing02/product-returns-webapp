@@ -5,7 +5,7 @@
 }
 
 body {
-  padding: 50px;
+  background-color: #f1f1f1;
   font: 14px Helvetica, Arial, sans-serif;
 }
 
@@ -37,7 +37,7 @@ body {
   align-items: center;
   width: 50px;
   height: 50px;
-  background-color: #30d9ab;
+  background-color: #00d0b9;
   color: #ffffff;
 }
 
@@ -53,7 +53,7 @@ body {
   width: 100%;
   padding: 15px;
   margin-top: 20px;
-  background-color: #30d9ab;
+  background-color: #00d0b9;
   border: 0;
   cursor: pointer;
   font-weight: bold;
@@ -66,51 +66,118 @@ body {
   transition: background-color 0.2s;
 }
 
-.topnav {
-  background-color: #30d9ab;
-  overflow: hidden;
+/* Following style handles home page */
+.hidden {
+  display: none;
 }
 
-.topnav a {
-  color: #1a1a1a;
-  text-align: center;
+.sidenav {
+  height: 100%;
+  max-width: 16em;
+  position: fixed;
+  top: 0;
+  left: 0;
+  background-color: white;
+  overflow-x: hidden;
+  padding-top: 1.5em;
+  border-right: 1px solid #dee0e4
+}
+
+.sidenav img {
+  width: 14em;
+  margin-left: 0.5em;
+  padding: 1em;
+}
+
+.sidenav-option {
+  padding: 1.75em;
   text-decoration: none;
-  font-size: 30px;
-  pointer-events: none;
-  display: flex;
-  align-items:stretch;
+  font-size: 1.25em;
+  color: #818181;
+  display: block;
+  max-width: 16em;
+}
+
+.sidenav button {
+  border: none;
+  cursor: pointer;
+  outline: none;
+  background-color: transparent;
+}
+
+.sidenav-option:hover {
+  color: #00ffcc;
+}
+
+.sidenav .current {
+  color: #00d0b9;
+  font-weight: bold;
+  border-right: 0.5em solid #00d0b9;
+}
+
+.main {
+  margin-left: 16em;
+  display: block;
+  align-items: center;
+  justify-content: center;
+}
+
+.topnav {
+  width: 100%;
+  overflow: hidden;
+  border-bottom: 1px solid #b0b0b0;
+  margin-bottom: 5em;
+}
+
+.topnav p {
+  margin-left: 1em;
   float: left;
-  padding: 10px;
+  font-size: 2em;
 }
 
 #navdetails {
   float: right;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 20em;
+  margin-top: 1em;
 }
 
-#querysection {
-  display: flex;  
-  justify-content: space-evenly;
-	align-items: center;
+#navdetails p {
+  font-size: 1.25em;
+  margin: 0em;
+  padding: 0.25em 2em 0.25em 0em;
 }
 
 .frm1, .frm2 {
-  padding: 5px;
-  font-size: 17px;
+  background-color: white;
+  border-radius: 1em;
+  width: 45%;
+  margin: auto;
+  padding: 0em 1em 1em 1em;
+  font-size: 1em;
+  color: #4a4a4a;
 }
 
 .frm1 h1, .frm2 h1 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  text-align: center;
-  color: #5b6574;
-  font-size: 28px;
-  padding: 20px;
-  border-bottom: 1px solid #0a2968;
+  font-size: 1.5em;
+  margin: 0em 0em 0.5em 0em;
+  padding: 0.5em;
+  border-bottom: 1px solid #616161;
+  font-weight: normal;
 }
 
-.frm1 label,select {
-  font-size: 17px;
-  padding-top: 5px;
-  padding-right: 10px;
+.frm1 label {
+  display: block;
+  font-size: 1em;
+  padding-top: 0.25em;
+}
+
+.frm1 input, .frm1 select {
+  width: 100%;
+}
+
+.frm1 button {
+  margin-top: 1em;
 }

@@ -8,17 +8,25 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
    * Loading UI and listeners once page finishes loading
    */
   function init() {
-    const submit = document.querySelector(".btn");
-    const search1 = document.querySelector(".search_btn_1");
-    const search2 = document.querySelector(".search_btn_2");
 
+    const page1 = document.getElementById("ticket-input");
+    const page2 = document.getElementById("ticket-query");
+    page1.addEventListener("click", displayTicketInput);
+    page2.addEventListener("click", displayTicketQuery);
+    
     setInterval(refreshTime, 1000);
 
-    submit.addEventListener("click", submitHandler);
-
+    const search1 = document.querySelector(".search_btn_1");
+    const search2 = document.querySelector(".search_btn_2");
     search1.addEventListener("click", ticketSearchHandler);
-
     search2.addEventListener("click", macSearchHandler);
+
+    const submit = document.querySelector(".frm1 form");
+    submit.addEventListener("submit", function(form) {
+      form.preventDefault();
+      submitHandler();
+    });
+
   }
 
   // Function to update displayed time
@@ -29,6 +37,20 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
     timeDisplay.textContent = formattedString;
   }
 
+  function displayTicketInput() {
+    this.classList.add("current");
+    document.getElementById("ticket-query").classList.remove("current");
+    document.querySelector(".frm1").classList.remove("hidden");
+    document.querySelector(".frm2").classList.add("hidden");
+  }
+  
+  function displayTicketQuery() {
+    this.classList.add("current");
+    document.getElementById("ticket-input").classList.remove("current");
+    document.querySelector(".frm1").classList.add("hidden");
+    document.querySelector(".frm2").classList.remove("hidden");
+  }
+  
   function submitHandler() {
     console.log("Form Submitted");
 
