@@ -22,15 +22,15 @@
           <p id='time'></p>
         </div>
       </div>
-      <div class="frm1">
+      <div id="frm1" class="form">
         <h1>Input New Ticket</h1>
         <form>
-          <label for="mac_addr">Input MAC Address:</label>
-          <input type="text" id="mac_addr" name="mac" text="2CAA8E0B6C95" required>
           <label for="mac_addr">Input Ticket Number:</label>
-          <input type="text" id="ticket_num" text="12345">
+          <input type="text" id="ticket_num" placeholder="e.g. 1543597">
+          <label for="mac_addr">Input MAC Address:</label>
+          <input type="text" id="mac_addr" name="mac" placeholder="e.g. 2CAA8E0B6C95" required>
           <label for="device">Select Device Type:</label>
-          <select id="device" name="device" required>
+          <select id="device" name="device" placeholder="Select an option" required>
             <option value="Wyze Cam v2">Wyze Cam v2</option>
             <option value="Wyze Cam v3">Wyze Cam v3</option>
             <option value="Wyze Cam Pan">Wyze Cam Pan</option>
@@ -40,21 +40,29 @@
             <option value="Wyze Outdoor Basestation">Wyze Outdoor Basestation</option>
             <option value="Wyze Robot Vacuum">Wyze Robot Vacuum</option>
           </select>
-          <button class="btn">Submit</button>
+          <button id="btn">Submit</button>
         </form>
       </div>
-      <div class="frm2 hidden">
-        <h1>Search for Ticket</h1>
-        <br>
-        Search by Ticket Number: <input type="text" id="tic_num_search" text="1543597">
-        <button class="search_btn_1">Search</button>
-        <br>
-        <br>
-        Search by MAC Address: <input type="text" id="mac_addr_search" text="2CAA8E0B6C95">
-        <button class="search_btn_2">Search</button>
-        <br>
-        <ul id="infoList"></ul>
+      <div id="frm2" class="form hidden">
+        <h1>Search by Ticket Number</h1>
+        <form>
+          <label for="tic_num_search">Ticket Number:</label>
+          <input type="text" id="tic_num_search" placeholder="e.g. 1543597">
+          <button id="search_btn_2">Search</button>
+        </form>
       </div>
+      <div id="frm3" class="form hidden">
+        <h1>Search by MAC Address</h1>
+        <form>
+          <label for="mac_addr">MAC Address:</label>
+          <input type="text" id="mac_addr_search" placeholder="e.g. 2CAA8E0B6C95">
+          <button id="search_btn_2">Search</button>
+        </form>
+      </div>
+      <div id="infoListContainer" class="hidden">
+        <h1 id="searchType">Search Results:</h1>
+        <ul id="infoList" ></ul>
+      <div></div>
     </section>
   </body>
 </html>

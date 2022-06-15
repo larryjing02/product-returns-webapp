@@ -16,17 +16,21 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
     
     setInterval(refreshTime, 1000);
 
-    const search1 = document.querySelector(".search_btn_1");
-    const search2 = document.querySelector(".search_btn_2");
-    search1.addEventListener("click", ticketSearchHandler);
-    search2.addEventListener("click", macSearchHandler);
-
-    const submit = document.querySelector(".frm1 form");
+    const submit = document.querySelector("#frm1 form");
+    const search1 = document.querySelector("#frm2 form");
+    const search2 = document.querySelector("#frm3 form");
     submit.addEventListener("submit", function(form) {
       form.preventDefault();
       submitHandler();
     });
-
+    search1.addEventListener("submit", function(form) {
+      form.preventDefault();
+      ticketSearchHandler();
+    });
+    search2.addEventListener("submit", function(form) {
+      form.preventDefault();
+      macSearchHandler();
+    });
   }
 
   // Function to update displayed time
@@ -40,37 +44,48 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
   function displayTicketInput() {
     this.classList.add("current");
     document.getElementById("ticket-query").classList.remove("current");
-    document.querySelector(".frm1").classList.remove("hidden");
-    document.querySelector(".frm2").classList.add("hidden");
+    document.getElementById("frm1").classList.remove("hidden");
+    document.getElementById("frm2").classList.add("hidden");
+    document.getElementById("frm3").classList.add("hidden");
+    document.getElementById("infoListContainer").classList.add("hidden");
+
   }
   
   function displayTicketQuery() {
     this.classList.add("current");
     document.getElementById("ticket-input").classList.remove("current");
-    document.querySelector(".frm1").classList.add("hidden");
-    document.querySelector(".frm2").classList.remove("hidden");
+    document.getElementById("frm1").classList.add("hidden");
+    document.getElementById("frm2").classList.remove("hidden");
+    document.getElementById("frm3").classList.remove("hidden");
   }
   
   function submitHandler() {
     console.log("Form Submitted");
 
+    let num = document.getElementById("ticket_num").value;
     let mac = document.getElementById("mac_addr").value;
     let dev = document.getElementById("device").value;
-    let num = document.getElementById("ticket_num").value;
 
+    console.log("Ticket Num: " + num);
     console.log("MAC Address: " + mac);
     console.log("Device Type: " + dev);
-    console.log("Ticket Num: " + num);
 
-    // Checks length of inputted mac address (must be 12)
-    // Checks that inputted mac address is alphanumeric
+    // Checks length of inputted ticket number (must be 7)
+    // Checks that inputted mac address is numeric
+    if (!num.match(reg_ticketnum)) {
+      alert("Please input a valid ticket number. Format: 1234567");
+      return;
+    }
+
+    // Checks length of inputted MAC address (must be 12)
+    // Checks that inputted MAC address is alphanumeric
     if (!mac.match(reg_mac)) {
-      alert("Please input a valid MAC Address. Format: AABBCCDDEEFF");
+      alert("Please input a valid MAC address. Format: AABBCCDDEEFF");
       return;
     }
     mac = mac.toUpperCase();
 
-    queryDatabase(mac, dev, num);
+    queryDatabase(num, mac, dev);
   }
 
   function ticketSearchHandler() { 
@@ -100,48 +115,45 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
     searchDatabase(mac);
   }
 
-  function queryDatabase(mac, dev, num) {
+  function queryDatabase(num, mac, dev) {
     console.log("Querying: ");
-    fetch("query/" + mac + "/" + dev + "/" + num, {
-      mode: "cors",
-      method: "GET",
-      credentials: "same-origin",
+    let data = new FormData();
+    data.append("num", num);
+    data.append("mac", mac);
+    data.append("dev", dev);
+
+    fetch("query/", {
+      method: "POST",
+      body: data,
+      credentials: "same-origin"
     }).then(statusCheck)
       .then((res) => res.text())
       .then((res) => {
-        console.log(res), alert(res);
+        console.log(res);
+        alert(res);
       })
       .catch((e) => console.log(e));
   }
   
   function searchDatabase(query) {
-    console.log("Search: ");
+    console.log("Searching database for: " + query);
     let url = "search/"
     if (query.length == 7) {
       url += "ticket/" + query;
+      document.getElementById("searchType").textContent = "Ticket Number Search Results:";
     } else {
       url += "mac/" + query;
+      document.getElementById("searchType").textContent = "MAC Address Search Results:";
     }
     fetch(url, {
       mode: "cors",
       method: "GET",
       credentials: "same-origin",
-    }).then(statusCheck)
-      .then((res) => res.text())
-      .then((res) => {
-        const data = JSON.parse(res);
+    }).then(searchStatusCheck)
+      .then(res => res.json())
+      .then(data => {
         let list = document.getElementById("infoList");
         list.innerHTML = "";
-        if (Object.keys(data).length === 0) {
-            if (query.length == 7) {
-              alert("Ticket Number '" + query + "' was not found.");
-            } else {
-              alert("MAC Address '" + query + "' was not found.");
-            }
-            return;
-        }
-  
-        // TODO: Fix formatting
         let li = document.createElement("li");
         li.innerText = 'MAC Address: ' + data["mac_addr"];
         list.appendChild(li);
@@ -160,12 +172,23 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
         let li6 = document.createElement("li");
         li6.innerText = 'Process Time: ' + data["processtime"];
         list.appendChild(li6);
+        document.getElementById("infoListContainer").classList.remove("hidden");
     }).catch((e) => console.log(e));
   }
-    
-  
+
   async function statusCheck(res) {
-    if (res.status < 200 || res.status > 304) {
+    if (res.status === 400) {
+      alert(await res.text());
+    } else if (res.status < 200 || res.status > 304) {
+      throw new Error(await res.text());
+    }
+    return res;
+  }
+
+  async function searchStatusCheck(res) {
+    if (res.status === 400) {
+      alert("Your search was not located in database!");
+    } else if (res.status < 200 || res.status > 304) {
       throw new Error(await res.text());
     }
     return res;

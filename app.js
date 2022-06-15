@@ -4,6 +4,7 @@ const path = require('path');
 const PropertiesReader = require("properties-reader");
 const mysql = require("mysql");
 const bcrypt = require("bcrypt");
+const multer = require("multer");
 
 //////////////////////////////////////////////////////////////////////
 
@@ -17,6 +18,7 @@ app.use(session({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(multer().none());
 app.use(express.static(path.join(__dirname, 'public')));
 
 // View Engine Setup
@@ -24,17 +26,13 @@ app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
 const properties = PropertiesReader("conn.properties");
+const INVALID_REQUEST = 400;
+const SERVER_ERROR = 500;
+const SERVER_ERROR_MSG = "An error occurred on the server. Try again later.";
+const PARAM_ERROR_MSG = "Missing one or more of the required params.";
+
 
 // Create connection to database
-// const config = {
-//   user: properties.get("username"),
-//   password: properties.get("password"),
-//   server: properties.get("server"),
-//   database: properties.get("database"),
-//   encrypt: true,
-// };
-// var pool;
-
 const pool = mysql.createPool({
   connectionLimit: properties.get("connectionlimit"),
   host: properties.get("server"),
@@ -88,6 +86,7 @@ app.post('/auth', async function(request, response) {
 	}
 });
 
+// Returns whether or not the login was valid
 async function verify_login(password, data) {
   // Check if data has anything in it first
   if (data.length === 0) {
@@ -178,50 +177,50 @@ app.get('/create', function(request, response) {
       title: "Create New User",
     });
 	} else {
-		// Not logged in
-		response.send('You must be logged in as an administrator to view this page!');
+    response.send('You must be logged in as an administrator to view this page!');
 	}
 	response.end();
 });
 
 // GET endpoint for submit query
-// TODO: Refactor to POST
-app.get("/query/:mac/:dev/:num", async (req, res) => {
-  const mac = req.params.mac;
-  const dev = req.params.dev;
-  const num = req.params.num;
-  console.log("Attempting to query for: " + mac);
+app.post("/query", async (req, res) => {
   res.type("text");
-  try {
-    const selectQuery = "SELECT COUNT(*) FROM ?? WHERE ?? = ?;";
-    let query = mysql.format(selectQuery, ["MAC_Address", "mac_addr", mac]);
-
-    pool.query(query, async (err, data) => {
-      if (err) {
-          console.error(err);
-          return;
-      }
-      if (data[0]["COUNT(*)"] >= 1) {
-        query = "MAC " + mac + " was found on the database!";
-      } else if (req.session.permissions > 2) {
-        res.status(200);
-        res.send("Sorry, you do not have permission to write to the database.");
-        return;
-      } else {
-        query = "Adding MAC " + mac + " to the database.";
-        await add_mac(pool, mac, dev, num, req.session.origin, req.session.username);
-      }
-      res.status(200);
-      res.send(query);
-    });
-  } catch (error) {
-    console.log(error);
-    res.status(500);
-    res.send("SENDING ERROR");
+  const mac = req.body.mac;
+  const dev = req.body.dev;
+  const num = req.body.num;
+  if (mac && dev && num) {
+    console.log("Attempting to query for: " + mac);
+    try {
+      const selectQuery = "SELECT COUNT(*) FROM MAC_Address WHERE mac_addr = ? OR ticket_number = ?;";
+      let query = mysql.format(selectQuery, [mac, num]);
+  
+      pool.query(query, async (err, data) => {
+        if (err) {
+            console.error(err);
+            res.status(SERVER_ERROR).send(SERVER_ERROR_MSG);
+        } else {
+          if (data[0]["COUNT(*)"] >= 1) {
+            res.status(INVALID_REQUEST)
+            res.send(`Ticket number ${num} or MAC Address ${mac} or was already found on the database!`);
+          } else if (req.session.permissions > 2) {
+            res.status(INVALID_REQUEST)
+            res.send("Sorry, you do not have permission to write to the database.");
+          } else {
+            await add_mac(pool, mac, dev, num, req.session.origin, req.session.username);
+            res.send(`Ticket ${num} has been added to the database.`)
+          }
+        }
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(SERVER_ERROR).send(SERVER_ERROR_MSG);
+    }
+  } else {
+    console.log("An invalid request was sent");
+    res.status(INVALID_REQUEST).send(PARAM_ERROR_MSG);
   }
 });
 
-// TODO: Fix ticket number
 async function add_mac(pool, mac, dev, num, orig, user) {
   const selectQuery = `INSERT INTO ?? VALUES (?, ?, ?, ?, UTC_TIMESTAMP(), ?);`
   const query = mysql.format(selectQuery, ["MAC_Address", mac, dev, num, orig, user]);
@@ -239,30 +238,26 @@ async function add_mac(pool, mac, dev, num, orig, user) {
 app.get("/search/ticket/:num", async (req, res) => {
   const num = req.params.num;
   console.log("Attempting to search for ticket: " + num);
-  res.type("text");
   try {
     const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
     const query = mysql.format(selectQuery, ["MAC_Address", "ticket_number", num]);
-    // ello
     pool.query(query, async (err, data) => {
       if (err) {
         console.error(err);
       } else {
         if (data.length === 0) {
           console.log("Ticket Number not found in database.")
-          res.status(200);
-          return res.send("{}");
+          res.type("text");
+          res.status(INVALID_REQUEST).send(PARAM_ERROR_MSG);
         } else {
-          res.status(200);
-          return res.send(JSON.stringify(data[0]));
+          return res.json(data[0]);
         }
       }
     });
   } catch (error) {
     console.log(error);
-    res.status(500);
-    res.send("SENDING ERROR");
-    res.end();
+    res.type("text");
+    res.status(SERVER_ERROR).send(SERVER_ERROR_MSG);
   }
 });
 
@@ -270,30 +265,26 @@ app.get("/search/ticket/:num", async (req, res) => {
 app.get("/search/mac/:mac", async (req, res) => {
   const mac = req.params.mac;
   console.log("Attempting to search for mac: " + mac);
-  res.type("text");
   try {
     const selectQuery = "SELECT * FROM ?? WHERE ?? = ?;"
     const query = mysql.format(selectQuery, ["MAC_Address", "mac_addr", mac]);
-    // ello
     pool.query(query, async (err, data) => {
       if (err) {
         console.error(err);
       } else {
         if (data.length === 0) {
           console.log("MAC Address not found in database.")
-          res.status(200);
-          return res.send("{}");
+          res.type("text");
+          res.status(INVALID_REQUEST).send(PARAM_ERROR_MSG);
         } else {
-          res.status(200);
-          return res.send(JSON.stringify(data[0]));
+          return res.json(data[0]);
         }
       }
     });
   } catch (error) {
     console.log(error);
-    res.status(500);
-    res.send("SENDING ERROR");
-    res.end();
+    res.type("text");
+    res.status(SERVER_ERROR).send(SERVER_ERROR_MSG);
   }
 });
 
