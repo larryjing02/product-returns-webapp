@@ -1,7 +1,6 @@
 const express = require('express');
 const session = require('express-session');
 const path = require('path');
-const PropertiesReader = require("properties-reader");
 const mysql = require("mysql");
 const bcrypt = require("bcrypt");
 const multer = require("multer");
@@ -25,7 +24,6 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.set('views', path.join(__dirname, 'views'))
 app.set('view engine', 'ejs')
 
-const properties = PropertiesReader("conn.properties");
 const INVALID_REQUEST = 400;
 const SERVER_ERROR = 500;
 const SERVER_ERROR_MSG = "An error occurred on the server. Try again later.";
@@ -34,16 +32,13 @@ const PARAM_ERROR_MSG = "Missing one or more of the required params.";
 
 // Create connection to database
 const pool = mysql.createPool({
-  connectionLimit: properties.get("connectionlimit"),
-  host: properties.get("server"),
-  user: properties.get("username"),
-  password: properties.get("password"),
-  database: properties.get("database"),
+  connectionLimit: process.env.RDS_WYZE_CONNECTIONLIMIT,
+  host: process.env.RDS_WYZE_SERVER,
+  user: process.env.RDS_WYZE_USERNAME,
+  password: process.env.RDS_WYZE_PASSWORD,
+  database: process.env.RDS_WYZE_DATABASE,
   debug: false
 });
-
-console.log("Testing Environment Variables")
-console.log(process.env.testkey)
 
 //////////////////////////////////////////////////////////////////////
 
