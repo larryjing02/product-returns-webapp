@@ -42,6 +42,9 @@ const pool = mysql.createPool({
   debug: false
 });
 
+console.log("Testing Environment Variables")
+console.log(process.env.testkey)
+
 //////////////////////////////////////////////////////////////////////
 
 // http://localhost:3000/
