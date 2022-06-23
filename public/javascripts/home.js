@@ -155,7 +155,11 @@ const reg_mac = /^[0-9a-zA-Z]{12}$/;
         let list = document.getElementById("infoList");
         list.innerHTML = "";
         let li = document.createElement("li");
-        li.innerText = 'MAC Address: ' + data["mac_addr"];
+        if (data["mac_addr"].match(reg_mac)) {
+          li.innerText = 'MAC Address: ' + data["mac_addr"];
+        } else {
+          li.innerText = 'Serial Number: ' + data["mac_addr"];
+        }
         list.appendChild(li);
         let li2 = document.createElement("li");
         li2.innerText = 'Device Type: ' + data["product_type"];
